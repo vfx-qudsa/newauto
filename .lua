@@ -1,5 +1,9 @@
 queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/vfx-qudsa/asfsadasdasdasdsa/refs/heads/main/.lua'))()")
 
+queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/vfx-qudsa/asfsadasdasdasdsa/refs/heads/main/.lua'))()")
+
+_G.AutofarmEnabled = false
+
 local LocalPlayer = game:GetService("Players").LocalPlayer
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -10,7 +14,7 @@ local PlayerKillerSettings = {
     TargetDistance = 1000
 }
 
-while true do
+while _G.AutofarmEnabled do
     pcall(function()
         local teleported = false
         task.spawn(function()
