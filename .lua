@@ -1,5 +1,5 @@
-
-
+if _G.AutofarmRunning then return end
+_G.AutofarmRunning = true
 _G.AutofarmEnabled = true
 
 local LocalPlayer = game:GetService("Players").LocalPlayer
@@ -136,6 +136,7 @@ while _G.AutofarmEnabled do
                                 end
                                 
                                 PlayerKillerSettings.Enabled = false
+                                _G.AutofarmRunning = false
                                 break
                             end
                         end
@@ -150,3 +151,5 @@ while _G.AutofarmEnabled do
         task.wait(5)
     end)
 end
+
+_G.AutofarmRunning = false
