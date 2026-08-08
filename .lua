@@ -15,6 +15,19 @@ local PlayerKillerSettings = {
 }
 
 while _G.AutofarmEnabled do
+    pcall(function()
+        local teleported = false
+        task.spawn(function()
+            while not teleported do
+                if Workspace:FindFirstChild("Shop") then
+                    local humanoidRootPart = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+                    humanoidRootPart.CFrame = CFrame.new(185, 66, -26)
+                    teleported = true
+                    break
+                end
+                task.wait(0.1)
+            end
+        end)
         
         task.wait(1)
         
