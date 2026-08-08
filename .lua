@@ -1,6 +1,4 @@
-queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/vfx-qudsa/newauto/refs/heads/main/.lua'))()")
 
-queue_on_teleport("_G.AutofarmEnabled = true; loadstring(game:HttpGet('https://raw.githubusercontent.com/vfx-qudsa/newguiauto/refs/heads/main/.lua'))()")
 
 _G.AutofarmEnabled = true
 
