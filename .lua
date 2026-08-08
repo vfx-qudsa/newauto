@@ -137,15 +137,6 @@ while _G.AutofarmEnabled do
                                 
                                 PlayerKillerSettings.Enabled = false
                                 _G.AutofarmRunning = false
-
-                                -- После возврата в лобби перезапускаем всё
-                                queue_on_teleport([[
-                                    _G.AutofarmRunning = nil
-                                    loadstring(game:HttpGet("https://raw.githubusercontent.com/vfx-qudsa/newguiauto/refs/heads/main/.lua"))()
-                                    task.wait(2)
-                                    loadstring(game:HttpGet("https://raw.githubusercontent.com/vfx-qudsa/newauto/refs/heads/main/.lua"))()
-                                ]])
-
                                 break
                             end
                         end
