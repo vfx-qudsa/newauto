@@ -108,44 +108,69 @@ while _G.AutofarmEnabled do
             startKiller()
 
             -- Ждём конца RedLightGreenLight
-            log("Ждём конца RedLightGreenLight")
-            while CurrentGame.Value == "RedLightGreenLight" do task.wait(0.5) end
-            log("CurrentGame: '" .. tostring(CurrentGame.Value) .. "'")
+log("Ждём конца RedLightGreenLight")
+while CurrentGame.Value == "RedLightGreenLight" do task.wait(0.5) end
+log("CurrentGame: '" .. tostring(CurrentGame.Value) .. "'")
 
-            -- Проверяем через 40 секунд есть ли StairWalkWay
-            local checkStart = tick()
-            local hasStairs = false
-            while tick() - checkStart < 40 do
-                if CurrentGame.Value == "StairWalkWay" then
-                    hasStairs = true
-                    break
-                end
-                task.wait(0.5)
+-- Ждём 2 анчора
+log("Ждём 2 появления и исчезновения Anchor")
+local anchorCount = 0
+local anchorDetected = false
+
+while anchorCount < 2 do
+    local liveFolder = Workspace:FindFirstChild("Live")
+    local anchorExists = false
+
+    if liveFolder then
+        for _, model in pairs(liveFolder:GetChildren()) do
+            if model:IsA("Model") and model:FindFirstChild("Anchor") then
+                anchorExists = true
+                break
             end
-
-            if not hasStairs then
-                log("StairWalkWay не появился - умираем")
-                killAndReturn()
-                _G.AutofarmRunning = false
-                return
-            end
-
-            -- Цепочка StairWalkWay -> DalgonaWaiting -> Dalgona
-            log("StairWalkWay есть - идём по цепочке")
-            waitForValue("DalgonaWaiting")
-            waitForValue("Dalgona")
-
-            log("Ждём конца Dalgona")
-            while CurrentGame.Value == "Dalgona" do task.wait(0.5) end
-            log("Dalgona закончилась - умираем")
-
-            killAndReturn()
-            _G.AutofarmRunning = false
-            task.wait(3)
         end
+    end
 
-        task.wait(5)
-    end)
+    if anchorExists and not anchorDetected then
+        anchorDetected = true
+        log("Anchor появился (" .. (anchorCount + 1) .. ")")
+    elseif not anchorExists and anchorDetected then
+        anchorDetected = false
+        anchorCount = anchorCount + 1
+        log("Anchor исчез (" .. anchorCount .. ")")
+    end
+
+    task.wait(0.5)
 end
 
+log("2 анчора отработали - начинаем отсчёт 40 секунд")
+
+-- Теперь проверяем StairWalkWay в течение 40 секунд
+local checkStart = tick()
+local hasStairs = false
+while tick() - checkStart < 40 do
+    if CurrentGame.Value == "StairWalkWay" then
+        hasStairs = true
+        break
+    end
+    task.wait(0.5)
+end
+
+if not hasStairs then
+    log("StairWalkWay не появился - умираем")
+    killAndReturn()
+    _G.AutofarmRunning = false
+    return
+end
+
+-- Цепочка StairWalkWay -> DalgonaWaiting -> Dalgona
+log("StairWalkWay есть - идём по цепочке")
+waitForValue("DalgonaWaiting")
+waitForValue("Dalgona")
+
+log("Ждём конца Dalgona")
+while CurrentGame.Value == "Dalgona" do task.wait(0.5) end
+log("Dalgona закончилась - умираем")
+
+killAndReturn()
 _G.AutofarmRunning = false
+task.wait(3)
