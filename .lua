@@ -9,7 +9,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PlayerKillerSettings = {
     Enabled = true,
     OnlyHeadshots = true,
-    TargetDistance = 1000
+    TargetDistance = 1000,
+    GatherEnabled = true
 }
 
 while _G.AutofarmEnabled do
@@ -53,50 +54,98 @@ while _G.AutofarmEnabled do
             
             PlayerKillerSettings.Enabled = true
             
+            -- Сбор игроков
             task.spawn(function()
-                while PlayerKillerSettings.Enabled do
+                while PlayerKillerSettings.GatherEnabled do
+                    pcall(function()
+                        local Character = LocalPlayer.Character
+                        local HumanoidRootPart = Character and Character:FindFirstChild("HumanoidRootPart")
+                        local liveFolder = Workspace:FindFirstChild("Live")
+                        
+                        if liveFolder and HumanoidRootPart then
+                            local gatherPos = HumanoidRootPart.Position + Vector3.new(0, 5, 0)
+                            
+                            for _, model in pairs(liveFolder:GetChildren()) do
+                                if model:IsA("Model")
+                                    and model.Name ~= LocalPlayer.Name
+                                    and model:FindFirstChild("HumanoidRootPart")
+                                    and model:FindFirstChild("GuardCanKill")
+                                then
+                                    model:FindFirstChild("HumanoidRootPart").CFrame = CFrame.new(gatherPos)
+                                end
+                            end
+                        end
+                    end)
+                    task.wait()
+                end
+            end)
+            
+            -- Убийство (эффективный метод)
+            local lastShot = 0
+            RunService.Heartbeat:Connect(function()
+                if not PlayerKillerSettings.Enabled then return end
+                
+                local now = tick()
+                if now - lastShot < 0.08 then return end
+                lastShot = now
+                
+                pcall(function()
                     local Character = LocalPlayer.Character
                     local HumanoidRootPart = Character and Character:FindFirstChild("HumanoidRootPart")
+                    local gun = Character and Character:FindFirstChildOfClass("Tool")
                     local liveFolder = Workspace:FindFirstChild("Live")
-                    local tool = Character and Character:FindFirstChildOfClass("Tool")
                     
-                    if liveFolder and tool and HumanoidRootPart then
-                        for _, model in pairs(liveFolder:GetChildren()) do
-                            if model:IsA("Model")
-                                and model.Name ~= LocalPlayer.Name
-                                and model:FindFirstChild("HumanoidRootPart")
-                                and model:FindFirstChild("GuardCanKill")
-                            then
-                                local humanoid = model:FindFirstChild("Humanoid")
-                                
-                                if humanoid and humanoid.Health > 0 then
-                                    local hitPart = (PlayerKillerSettings.OnlyHeadshots and model:FindFirstChild("Head"))
-                                        or model:FindFirstChild("HumanoidRootPart")
-                                    
-                                    if hitPart then
-                                        pcall(function()
-                                            ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("FiredGunClient"):FireServer(
-                                                tool,
-                                                {
-                                                    ClientRayNormal = (hitPart.Position - HumanoidRootPart.Position).Unit,
-                                                    FiredGun = true,
-                                                    ClientRayInstance = hitPart,
-                                                    HitTargets = {hitPart},
-                                                    ClientRayPosition = hitPart.Position,
-                                                    FirePosition = HumanoidRootPart.Position,
-                                                    Value = 1,
-                                                    Ammo = 1
-                                                }
-                                            )
-                                        end)
-                                    end
+                    if not (gun and HumanoidRootPart and liveFolder) then return end
+                    
+                    local hits = {}
+                    local rootPos = HumanoidRootPart.Position
+                    local maxDist = PlayerKillerSettings.TargetDistance
+                    
+                    for _, model in ipairs(liveFolder:GetChildren()) do
+                        if model:IsA("Model")
+                            and model.Name ~= LocalPlayer.Name
+                            and model:FindFirstChild("HumanoidRootPart")
+                            and model:FindFirstChild("GuardCanKill")
+                        then
+                            local targetRoot = model:FindFirstChild("HumanoidRootPart")
+                            local humanoid = model:FindFirstChild("Humanoid")
+                            
+                            if targetRoot and humanoid and humanoid.Health > 0 then
+                                local dist = (targetRoot.Position - rootPos).Magnitude
+                                if dist < maxDist then
+                                    hits[model.Name] = PlayerKillerSettings.OnlyHeadshots and "Head" or "HumanoidRootPart"
                                 end
                             end
                         end
                     end
-                    task.wait()
-                end
+                    
+                    if next(hits) == nil then return end
+                    
+                    local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+                    local remote = remotes and remotes:FindFirstChild("FiredGunClient")
+                    if not remote then return end
+                    
+                    local args = {
+                        gun,
+                        {
+                            ClientRayNormal = Vector3.new(0, 1, 0),
+                            FiredGun = true,
+                            SecondaryHitTargets = {},
+                            ClientRayInstance = workspace:FindFirstChild("Baseplate") or workspace,
+                            ClientRayPosition = rootPos,
+                            bulletCF = CFrame.new(rootPos),
+                            HitTargets = hits,
+                            bulletSizeC = Vector3.new(0.01, 0.01, 5),
+                            NoMuzzleFX = false,
+                            FirePosition = rootPos
+                        }
+                    }
+                    remote:FireServer(unpack(args))
+                end)
             end)
+        end
+    end)
+end
 
             task.spawn(function()
                 local anchorDetected = false
