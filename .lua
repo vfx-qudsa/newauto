@@ -34,22 +34,32 @@ while _G.AutofarmEnabled do
         local enrollFolder = LocalPlayer.PlayerGui:WaitForChild("UIHolderScreenInset"):WaitForChild("EnrollForGuardAsk")
 
         if getconnections then
-            local button1 = enrollFolder:WaitForChild("HeaderPrompt"):WaitForChild("Green"):WaitForChild("Green")
-            for _, connection in pairs(getconnections(button1.MouseButton1Click)) do
-                pcall(function() connection:Fire() end)
+            local function clickButton(button)
+                if not button then return end
+                for _, connection in pairs(getconnections(button.MouseButton1Click)) do
+                    pcall(function() connection:Fire() end)
+                end
             end
+            
+            local button1 = enrollFolder:FindFirstChild("HeaderPrompt")
+            if button1 then
+                button1 = button1:FindFirstChild("Green")
+                if button1 then button1 = button1:FindFirstChild("Green") end
+            end
+            clickButton(button1)
             task.wait(0.5)
             
-            local button2 = enrollFolder:WaitForChild("RankSelection"):WaitForChild("EquipTier1")
-            for _, connection in pairs(getconnections(button2.MouseButton1Click)) do
-                pcall(function() connection:Fire() end)
-            end
+            local button2 = enrollFolder:FindFirstChild("RankSelection")
+            if button2 then button2 = button2:FindFirstChild("EquipTier1") end
+            clickButton(button2)
             task.wait(0.5)
             
-            local button3 = enrollFolder:WaitForChild("RankConfirmation"):WaitForChild("Green"):WaitForChild("Green")
-            for _, connection in pairs(getconnections(button3.MouseButton1Click)) do
-                pcall(function() connection:Fire() end)
+            local button3 = enrollFolder:FindFirstChild("RankConfirmation")
+            if button3 then
+                button3 = button3:FindFirstChild("Green")
+                if button3 then button3 = button3:FindFirstChild("Green") end
             end
+            clickButton(button3)
             task.wait(1)
             
             PlayerKillerSettings.Enabled = true
@@ -130,7 +140,6 @@ while _G.AutofarmEnabled do
         end
     end)
 end
-
             task.spawn(function()
                 local anchorDetected = false
                 local disappearCount = 0
