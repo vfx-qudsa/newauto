@@ -32,12 +32,24 @@ while _G.AutofarmEnabled do
         LocalPlayer:SetAttribute("__OwnsPermGuard", true)
         local enrollFolder = LocalPlayer.PlayerGui:WaitForChild("UIHolderScreenInset"):WaitForChild("EnrollForGuardAsk")
 
-        if getconnections then
-            local button1 = enrollFolder:WaitForChild("HeaderPrompt"):WaitForChild("Green"):WaitForChild("Green")
-            for _, connection in pairs(getconnections(button1.MouseButton1Click)) do
-                pcall(function() connection:Fire() end)
+        if getconnections and type(getconnections) == "function" then
+    local headerPrompt = enrollFolder:FindFirstChild("HeaderPrompt")
+    if headerPrompt then
+        local green1 = headerPrompt:FindFirstChild("Green")
+        if green1 then
+            local button1 = green1:FindFirstChild("Green")
+            if button1 then
+                local connections = getconnections(button1.MouseButton1Click)
+                if connections then
+                    for _, connection in pairs(connections) do
+                        pcall(function() connection:Fire() end)
+                    end
+                end
             end
-            task.wait(0.5)
+        end
+    end
+    task.wait(0.5)
+end
             
             local button2 = enrollFolder:WaitForChild("RankSelection"):WaitForChild("EquipTier1")
             for _, connection in pairs(getconnections(button2.MouseButton1Click)) do
