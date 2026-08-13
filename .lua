@@ -99,56 +99,67 @@ while _G.AutofarmEnabled do
             end)
 
             task.spawn(function()
-    local anchorDetected = false
-    local disappearCount = 0
-    while PlayerKillerSettings.Enabled do
-        local liveFolder = Workspace:FindFirstChild("Live")
-        if liveFolder then
-            local anchorExists = false
-            for _, model in pairs(liveFolder:GetChildren()) do
-                if model:IsA("Model") and model:FindFirstChild("Anchor") then
-                    anchorExists = true
-                    break
-                end
-            end
-            if anchorExists and not anchorDetected then
-                anchorDetected = true
-            elseif not anchorExists and anchorDetected then
-                disappearCount = disappearCount + 1
-                anchorDetected = false
-                if disappearCount == 2 then
-                    local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
-                    if humanoid then
-                        humanoid.Health = 0
-                    end
-                    task.wait(2)
-                    
-                    local spectating = LocalPlayer.PlayerGui:FindFirstChild("Spectating")
-                    if spectating then
-                        local spectateScreen = spectating:FindFirstChild("SpectateScreen")
-                        if spectateScreen then
-                            local content = spectateScreen:FindFirstChild("Content")
-                            if content then
-                                local buttonOptions = content:FindFirstChild("ButtonOptions")
-                                if buttonOptions then
-                                    local button = buttonOptions:FindFirstChild("ReturnLobby")
-                                    if button and button:IsA("GuiButton") then
-                                        for _, connection in pairs(getconnections(button.MouseButton1Click)) do
-                                            pcall(function() connection:Fire() end)
+                local anchorDetected = false
+                local disappearCount = 0
+
+                while PlayerKillerSettings.Enabled do
+                    local liveFolder = Workspace:FindFirstChild("Live")
+                    if liveFolder then
+                        local anchorExists = false
+
+                        for _, model in pairs(liveFolder:GetChildren()) do
+                            if model:IsA("Model") and model:FindFirstChild("Anchor") then
+                                anchorExists = true
+                                break
+                            end
+                        end
+
+                        if anchorExists and not anchorDetected then
+                            anchorDetected = true
+                        elseif not anchorExists and anchorDetected then
+                            disappearCount = disappearCount + 1
+                            anchorDetected = false
+
+                            if disappearCount == 2 then
+                                local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+                                if humanoid then
+                                    humanoid.Health = 0
+                                end
+
+                                task.wait(2)
+
+                                local spectating = LocalPlayer.PlayerGui:FindFirstChild("Spectating")
+                                if spectating then
+                                    local spectateScreen = spectating:FindFirstChild("SpectateScreen")
+                                    if spectateScreen then
+                                        local content = spectateScreen:FindFirstChild("Content")
+                                        if content then
+                                            local buttonOptions = content:FindFirstChild("ButtonOptions")
+                                            if buttonOptions then
+                                                local button = buttonOptions:FindFirstChild("ReturnLobby")
+                                                if button and button:IsA("GuiButton") then
+                                                    button:Activate()
+                                                end
+                                            end
                                         end
                                     end
                                 end
+
+                                PlayerKillerSettings.Enabled = false
+                                _G.AutofarmRunning = false
+                                break
                             end
                         end
                     end
-                    
-                    PlayerKillerSettings.Enabled = false
-                    _G.AutofarmRunning = false
-                    break
+                    task.wait(0.5)
                 end
-            end
+            end)
+
+            task.wait(3)
         end
-        task.wait(0.5)
-    end
-end)
-task.wait(3)
+
+        task.wait(5)
+    end)
+end
+
+_G.AutofarmRunning = false
