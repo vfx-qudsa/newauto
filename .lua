@@ -9,8 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PlayerKillerSettings = {
     Enabled = true,
     OnlyHeadshots = true,
-    TargetDistance = 1000,
-    GatherEnabled = true
+    TargetDistance = 1000
 }
 
 while _G.AutofarmEnabled do
@@ -54,35 +53,10 @@ while _G.AutofarmEnabled do
             
             PlayerKillerSettings.Enabled = true
             
-            -- Сбор игроков
-            task.spawn(function()
-                while PlayerKillerSettings.GatherEnabled do
-                    pcall(function()
-                        local Character = LocalPlayer.Character
-                        local HumanoidRootPart = Character and Character:FindFirstChild("HumanoidRootPart")
-                        local liveFolder = Workspace:FindFirstChild("Live")
-                        
-                        if liveFolder and HumanoidRootPart then
-                            local gatherPos = HumanoidRootPart.Position + Vector3.new(0, 5, 0)
-                            
-                            for _, model in pairs(liveFolder:GetChildren()) do
-                                if model:IsA("Model")
-                                    and model.Name ~= LocalPlayer.Name
-                                    and model:FindFirstChild("HumanoidRootPart")
-                                    and model:FindFirstChild("GuardCanKill")
-                                then
-                                    model:FindFirstChild("HumanoidRootPart").CFrame = CFrame.new(gatherPos)
-                                end
-                            end
-                        end
-                    end)
-                    task.wait()
-                end
-            end)
-            
             -- Убийство (эффективный метод)
             local lastShot = 0
-            RunService.Heartbeat:Connect(function()
+            local shootConnection
+            shootConnection = RunService.Heartbeat:Connect(function()
                 if not PlayerKillerSettings.Enabled then return end
                 
                 local now = tick()
@@ -122,74 +96,76 @@ while _G.AutofarmEnabled do
                     if next(hits) == nil then return end
                     
                     local remotes = ReplicatedStorage:FindFirstChild("Remotes")
-                    local remote = remotes and remotes:FindFirstChild("FiredGunClient")
+                    if not remotes then return end
+                    local remote = remotes:FindFirstChild("FiredGunClient")
                     if not remote then return end
                     
-                    local args = {
-                        gun,
-                        {
-                            ClientRayNormal = Vector3.new(0, 1, 0),
-                            FiredGun = true,
-                            SecondaryHitTargets = {},
-                            ClientRayInstance = workspace:FindFirstChild("Baseplate") or workspace,
-                            ClientRayPosition = rootPos,
-                            bulletCF = CFrame.new(rootPos),
-                            HitTargets = hits,
-                            bulletSizeC = Vector3.new(0.01, 0.01, 5),
-                            NoMuzzleFX = false,
-                            FirePosition = rootPos
-                        }
-                    }
-                    remote:FireServer(unpack(args))
+                    remote:FireServer(gun, {
+                        ClientRayNormal = Vector3.new(0, 1, 0),
+                        FiredGun = true,
+                        SecondaryHitTargets = {},
+                        ClientRayInstance = Workspace:FindFirstChild("Baseplate") or Workspace,
+                        ClientRayPosition = rootPos,
+                        bulletCF = CFrame.new(rootPos),
+                        HitTargets = hits,
+                        bulletSizeC = Vector3.new(0.01, 0.01, 5),
+                        NoMuzzleFX = false,
+                        FirePosition = rootPos
+                    })
                 end)
             end)
-        end
-    end)
-end
 
+            -- Проверка анкора и перезагрузка
             task.spawn(function()
                 local anchorDetected = false
                 local disappearCount = 0
 
                 while PlayerKillerSettings.Enabled do
-                    local liveFolder = Workspace:FindFirstChild("Live")
-                    if liveFolder then
-                        local anchorExists = false
+                    pcall(function()
+                        local liveFolder = Workspace:FindFirstChild("Live")
+                        if liveFolder then
+                            local anchorExists = false
 
-                        for _, model in pairs(liveFolder:GetChildren()) do
-                            if model:IsA("Model") and model:FindFirstChild("Anchor") then
-                                anchorExists = true
-                                break
-                            end
-                        end
-
-                        if anchorExists and not anchorDetected then
-                            anchorDetected = true
-                        elseif not anchorExists and anchorDetected then
-                            disappearCount = disappearCount + 1
-                            anchorDetected = false
-
-                            if disappearCount == 2 then
-                                local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
-                                if humanoid then
-                                    humanoid.Health = 0
+                            for _, model in pairs(liveFolder:GetChildren()) do
+                                if model:IsA("Model") and model:FindFirstChild("Anchor") then
+                                    anchorExists = true
+                                    break
                                 end
+                            end
 
-                                task.wait(2)
+                            if anchorExists and not anchorDetected then
+                                anchorDetected = true
+                            elseif not anchorExists and anchorDetected then
+                                disappearCount = disappearCount + 1
+                                anchorDetected = false
 
-                                local button = LocalPlayer.PlayerGui:WaitForChild("Spectating").SpectateScreen.Content.ButtonOptions.ReturnLobby
-                                if button and button:IsA("GuiButton") then
-                                    for _, connection in pairs(getconnections(button.MouseButton1Click)) do
-                                        connection:Fire()
+                                if disappearCount == 2 then
+                                    local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+                                    if humanoid then
+                                        humanoid.Health = 0
                                     end
-                                end
 
-                                PlayerKillerSettings.Enabled = false
-                                _G.AutofarmRunning = false
-                                break
+                                    task.wait(2)
+
+                                    pcall(function()
+                                        local spectating = LocalPlayer.PlayerGui:FindFirstChild("Spectating")
+                                        if spectating then
+                                            local button = spectating:FindFirstChild("SpectateScreen") and spectating.SpectateScreen:FindFirstChild("Content") and spectating.SpectateScreen.Content:FindFirstChild("ButtonOptions") and spectating.SpectateScreen.Content.ButtonOptions:FindFirstChild("ReturnLobby")
+                                            if button and button:IsA("GuiButton") then
+                                                for _, connection in pairs(getconnections(button.MouseButton1Click)) do
+                                                    connection:Fire()
+                                                end
+                                            end
+                                        end
+                                    end)
+
+                                    PlayerKillerSettings.Enabled = false
+                                    _G.AutofarmRunning = false
+                                    break
+                                end
                             end
                         end
-                    end
+                    end)
                     task.wait(0.5)
                 end
             end)
