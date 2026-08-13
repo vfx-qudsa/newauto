@@ -1,15 +1,8 @@
-if _G.AutofarmRunning then return end
-_G.AutofarmRunning = true
-_G.AutofarmEnabled = true
-
-local LocalPlayer = game:GetService("Players").LocalPlayer
-local Workspace = game:GetService("Workspace")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 local PlayerKillerSettings = {
     Enabled = true,
     OnlyHeadshots = true,
-    TargetDistance = 1000
+    TargetDistance = 1000,
+    GatherEnabled = true
 }
 
 while _G.AutofarmEnabled do
@@ -59,6 +52,33 @@ while _G.AutofarmEnabled do
             
             PlayerKillerSettings.Enabled = true
             
+            -- Сбор игроков
+            task.spawn(function()
+                while PlayerKillerSettings.GatherEnabled do
+                    pcall(function()
+                        local Character = LocalPlayer.Character
+                        local HumanoidRootPart = Character and Character:FindFirstChild("HumanoidRootPart")
+                        local liveFolder = Workspace:FindFirstChild("Live")
+                        
+                        if liveFolder and HumanoidRootPart then
+                            local gatherPos = HumanoidRootPart.Position + Vector3.new(0, 5, 0)
+                            
+                            for _, model in pairs(liveFolder:GetChildren()) do
+                                if model:IsA("Model")
+                                    and model.Name ~= LocalPlayer.Name
+                                    and model:FindFirstChild("HumanoidRootPart")
+                                    and model:FindFirstChild("GuardCanKill")
+                                then
+                                    model:FindFirstChild("HumanoidRootPart").CFrame = CFrame.new(gatherPos)
+                                end
+                            end
+                        end
+                    end)
+                    task.wait()
+                end
+            end)
+            
+            -- Убийство
             task.spawn(function()
                 while PlayerKillerSettings.Enabled do
                     pcall(function()
@@ -105,75 +125,6 @@ while _G.AutofarmEnabled do
                     task.wait()
                 end
             end)
-
-            task.spawn(function()
-                local anchorDetected = false
-                local disappearCount = 0
-
-                while PlayerKillerSettings.Enabled do
-                    pcall(function()
-                        local liveFolder = Workspace:FindFirstChild("Live")
-                        if liveFolder then
-                            local anchorExists = false
-
-                            for _, model in pairs(liveFolder:GetChildren()) do
-                                if model:IsA("Model") and model:FindFirstChild("Anchor") then
-                                    anchorExists = true
-                                    break
-                                end
-                            end
-
-                            if anchorExists and not anchorDetected then
-                                anchorDetected = true
-                            elseif not anchorExists and anchorDetected then
-                                disappearCount = disappearCount + 1
-                                anchorDetected = false
-
-                                if disappearCount == 2 then
-                                    local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
-                                    if humanoid then
-                                        humanoid.Health = 0
-                                    end
-
-                                    task.wait(2)
-
-                                    pcall(function()
-                                        local button = LocalPlayer.PlayerGui:FindFirstChild("Spectating")
-                                        if button then
-                                            button = button:FindFirstChild("SpectateScreen")
-                                            if button then
-                                                button = button:FindFirstChild("Content")
-                                                if button then
-                                                    button = button:FindFirstChild("ButtonOptions")
-                                                    if button then
-                                                        button = button:FindFirstChild("ReturnLobby")
-                                                        if button and button:IsA("GuiButton") and getconnections then
-                                                            for _, connection in pairs(getconnections(button.MouseButton1Click)) do
-                                                                connection:Fire()
-                                                            end
-                                                        end
-                                                    end
-                                                end
-                                            end
-                                        end
-                                    end)
-
-                                    PlayerKillerSettings.Enabled = false
-                                    _G.AutofarmRunning = false
-                                    break
-                                end
-                            end
-                        end
-                    end)
-                    task.wait(0.5)
-                end
-            end)
-
-            task.wait(3)
         end
-
-        task.wait(5)
     end)
 end
-
-_G.AutofarmRunning = false
