@@ -32,55 +32,22 @@ while _G.AutofarmEnabled do
         LocalPlayer:SetAttribute("__OwnsPermGuard", true)
         local enrollFolder = LocalPlayer.PlayerGui:WaitForChild("UIHolderScreenInset"):WaitForChild("EnrollForGuardAsk")
 
-        if getconnections and type(getconnections) == "function" then
-            -- Button 1
-            local headerPrompt = enrollFolder:FindFirstChild("HeaderPrompt")
-            if headerPrompt then
-                local green1 = headerPrompt:FindFirstChild("Green")
-                if green1 then
-                    local button1 = green1:FindFirstChild("Green")
-                    if button1 then
-                        local connections = getconnections(button1.MouseButton1Click)
-                        if connections then
-                            for _, connection in pairs(connections) do
-                                pcall(function() connection:Fire() end)
-                            end
-                        end
-                    end
-                end
+        if getconnections then
+            local button1 = enrollFolder:WaitForChild("HeaderPrompt"):WaitForChild("Green"):WaitForChild("Green")
+            for _, connection in pairs(getconnections(button1.MouseButton1Click)) do
+                pcall(function() connection:Fire() end)
             end
             task.wait(0.5)
             
-            -- Button 2
-            local rankSelection = enrollFolder:FindFirstChild("RankSelection")
-            if rankSelection then
-                local button2 = rankSelection:FindFirstChild("EquipTier1")
-                if button2 then
-                    local connections = getconnections(button2.MouseButton1Click)
-                    if connections then
-                        for _, connection in pairs(connections) do
-                            pcall(function() connection:Fire() end)
-                        end
-                    end
-                end
+            local button2 = enrollFolder:WaitForChild("RankSelection"):WaitForChild("EquipTier1")
+            for _, connection in pairs(getconnections(button2.MouseButton1Click)) do
+                pcall(function() connection:Fire() end)
             end
             task.wait(0.5)
             
-            -- Button 3
-            local rankConfirmation = enrollFolder:FindFirstChild("RankConfirmation")
-            if rankConfirmation then
-                local green2 = rankConfirmation:FindFirstChild("Green")
-                if green2 then
-                    local button3 = green2:FindFirstChild("Green")
-                    if button3 then
-                        local connections = getconnections(button3.MouseButton1Click)
-                        if connections then
-                            for _, connection in pairs(connections) do
-                                pcall(function() connection:Fire() end)
-                            end
-                        end
-                    end
-                end
+            local button3 = enrollFolder:WaitForChild("RankConfirmation"):WaitForChild("Green"):WaitForChild("Green")
+            for _, connection in pairs(getconnections(button3.MouseButton1Click)) do
+                pcall(function() connection:Fire() end)
             end
             task.wait(1)
             
@@ -130,11 +97,6 @@ while _G.AutofarmEnabled do
                     task.wait()
                 end
             end)
-        end
-
-        task.wait(5)
-    end)
-end
 
             task.spawn(function()
                 local anchorDetected = false
@@ -166,20 +128,10 @@ end
 
                                 task.wait(2)
 
-                                local spectating = LocalPlayer.PlayerGui:FindFirstChild("Spectating")
-                                if spectating then
-                                    local spectateScreen = spectating:FindFirstChild("SpectateScreen")
-                                    if spectateScreen then
-                                        local content = spectateScreen:FindFirstChild("Content")
-                                        if content then
-                                            local buttonOptions = content:FindFirstChild("ButtonOptions")
-                                            if buttonOptions then
-                                                local button = buttonOptions:FindFirstChild("ReturnLobby")
-                                                if button and button:IsA("GuiButton") then
-                                                    button:Activate()
-                                                end
-                                            end
-                                        end
+                                local button = LocalPlayer.PlayerGui:WaitForChild("Spectating").SpectateScreen.Content.ButtonOptions.ReturnLobby
+                                if button and button:IsA("GuiButton") then
+                                    for _, connection in pairs(getconnections(button.MouseButton1Click)) do
+                                        connection:Fire()
                                     end
                                 end
 
