@@ -5,6 +5,7 @@ _G.AutofarmEnabled = true
 local LocalPlayer = game:GetService("Players").LocalPlayer
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local PlayerKillerSettings = {
     Enabled = true,
@@ -53,10 +54,8 @@ while _G.AutofarmEnabled do
             
             PlayerKillerSettings.Enabled = true
             
-            -- Убийство (эффективный метод)
             local lastShot = 0
-            local shootConnection
-            shootConnection = RunService.Heartbeat:Connect(function()
+            RunService.Heartbeat:Connect(function()
                 if not PlayerKillerSettings.Enabled then return end
                 
                 local now = tick()
@@ -73,7 +72,6 @@ while _G.AutofarmEnabled do
                     
                     local hits = {}
                     local rootPos = HumanoidRootPart.Position
-                    local maxDist = PlayerKillerSettings.TargetDistance
                     
                     for _, model in ipairs(liveFolder:GetChildren()) do
                         if model:IsA("Model")
@@ -85,37 +83,34 @@ while _G.AutofarmEnabled do
                             local humanoid = model:FindFirstChild("Humanoid")
                             
                             if targetRoot and humanoid and humanoid.Health > 0 then
-                                local dist = (targetRoot.Position - rootPos).Magnitude
-                                if dist < maxDist then
-                                    hits[model.Name] = PlayerKillerSettings.OnlyHeadshots and "Head" or "HumanoidRootPart"
-                                end
+                                hits[model.Name] = "Head"
                             end
                         end
                     end
                     
-                    if next(hits) == nil then return end
-                    
-                    local remotes = ReplicatedStorage:FindFirstChild("Remotes")
-                    if not remotes then return end
-                    local remote = remotes:FindFirstChild("FiredGunClient")
-                    if not remote then return end
-                    
-                    remote:FireServer(gun, {
-                        ClientRayNormal = Vector3.new(0, 1, 0),
-                        FiredGun = true,
-                        SecondaryHitTargets = {},
-                        ClientRayInstance = Workspace:FindFirstChild("Baseplate") or Workspace,
-                        ClientRayPosition = rootPos,
-                        bulletCF = CFrame.new(rootPos),
-                        HitTargets = hits,
-                        bulletSizeC = Vector3.new(0.01, 0.01, 5),
-                        NoMuzzleFX = false,
-                        FirePosition = rootPos
-                    })
+                    if next(hits) then
+                        local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+                        if remotes then
+                            local remote = remotes:FindFirstChild("FiredGunClient")
+                            if remote then
+                                remote:FireServer(gun, {
+                                    ClientRayNormal = Vector3.new(0, 1, 0),
+                                    FiredGun = true,
+                                    SecondaryHitTargets = {},
+                                    ClientRayInstance = Workspace,
+                                    ClientRayPosition = rootPos,
+                                    bulletCF = CFrame.new(rootPos),
+                                    HitTargets = hits,
+                                    bulletSizeC = Vector3.new(0.01, 0.01, 5),
+                                    NoMuzzleFX = false,
+                                    FirePosition = rootPos
+                                })
+                            end
+                        end
+                    end
                 end)
             end)
 
-            -- Проверка анкора и перезагрузка
             task.spawn(function()
                 local anchorDetected = false
                 local disappearCount = 0
@@ -144,21 +139,7 @@ while _G.AutofarmEnabled do
                                     if humanoid then
                                         humanoid.Health = 0
                                     end
-
                                     task.wait(2)
-
-                                    pcall(function()
-                                        local spectating = LocalPlayer.PlayerGui:FindFirstChild("Spectating")
-                                        if spectating then
-                                            local button = spectating:FindFirstChild("SpectateScreen") and spectating.SpectateScreen:FindFirstChild("Content") and spectating.SpectateScreen.Content:FindFirstChild("ButtonOptions") and spectating.SpectateScreen.Content.ButtonOptions:FindFirstChild("ReturnLobby")
-                                            if button and button:IsA("GuiButton") then
-                                                for _, connection in pairs(getconnections(button.MouseButton1Click)) do
-                                                    connection:Fire()
-                                                end
-                                            end
-                                        end
-                                    end)
-
                                     PlayerKillerSettings.Enabled = false
                                     _G.AutofarmRunning = false
                                     break
