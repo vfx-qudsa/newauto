@@ -176,57 +176,61 @@ local function start_anchor_detection()
     task.spawn(function()
         local anchorDetected = false
         local disappearCount = 0
-
         while PlayerKillerSettings.Enabled do
             local liveFolder = Workspace:FindFirstChild("Live")
             if liveFolder then
                 local anchorExists = false
-
                 for _, model in ipairs(liveFolder:GetChildren()) do
                     if model:IsA("Model") and model:FindFirstChild("Anchor") then
                         anchorExists = true
                         break
                     end
                 end
-
                 if anchorExists and not anchorDetected then
                     anchorDetected = true
                 elseif not anchorExists and anchorDetected then
                     disappearCount = disappearCount + 1
                     anchorDetected = false
-
                     if disappearCount == 2 then
                         local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
                         if humanoid then
                             humanoid.Health = 0
                         end
-
                         task.wait(2)
-
-                        local spectating = LocalPlayer.PlayerGui:FindFirstChild("Spectating")
-                        if spectating then
-                            local spectateScreen = spectating:FindFirstChild("SpectateScreen")
-                            if spectateScreen then
-                                local content = spectateScreen:FindFirstChild("Content")
-                                if content then
-                                    local buttonOptions = content:FindFirstChild("ButtonOptions")
-                                    if buttonOptions then
-                                        local button = buttonOptions:FindFirstChild("ReturnLobby")
-                                        if button and button:IsA("GuiButton") then
-                                            if getconnections and type(getconnections) == "function" then
-                                                local connections = getconnections(button.MouseButton1Click)
-                                                if connections then
-                                                    for _, connection in ipairs(connections) do
-                                                        pcall(function() connection:Fire() end)
+                        
+                        pcall(function()
+                            local spectating = LocalPlayer.PlayerGui:FindFirstChild("Spectating")
+                            if spectating then
+                                local spectateScreen = spectating:FindFirstChild("SpectateScreen")
+                                if spectateScreen then
+                                    local content = spectateScreen:FindFirstChild("Content")
+                                    if content then
+                                        local buttonOptions = content:FindFirstChild("ButtonOptions")
+                                        if buttonOptions then
+                                            local button = buttonOptions:FindFirstChild("ReturnLobby")
+                                            if button and button:IsA("GuiButton") then
+                                                -- Сначала пробуем getconnections
+                                                if getconnections and type(getconnections) == "function" then
+                                                    local connections = getconnections(button.MouseButton1Click)
+                                                    if connections and #connections > 0 then
+                                                        for _, connection in ipairs(connections) do
+                                                            pcall(function() connection:Fire() end)
+                                                        end
+                                                    else
+                                                        -- Если getconnections не сработала, используем Activate
+                                                        button:Activate()
                                                     end
+                                                else
+                                                    -- Если нет getconnections, просто активируем
+                                                    button:Activate()
                                                 end
                                             end
                                         end
                                     end
                                 end
                             end
-                        end
-
+                        end)
+                        
                         PlayerKillerSettings.Enabled = false
                         if PlayerKillerSettings.HeartbeatConnection then
                             PlayerKillerSettings.HeartbeatConnection:Disconnect()
@@ -246,7 +250,6 @@ while _G.AutofarmEnabled do
     pcall(function()
         teleport_to_shop()
         task.wait(1)
-
         LocalPlayer:SetAttribute("__OwnsPermGuard", true)
         
         if click_enrollment_buttons() then
@@ -255,9 +258,7 @@ while _G.AutofarmEnabled do
             start_anchor_detection()
             task.wait(3)
         end
-
         task.wait(5)
     end)
 end
-
 _G.AutofarmRunning = false
