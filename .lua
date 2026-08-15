@@ -198,7 +198,7 @@ task.spawn(function()
                     task.wait(2)
                     
                     pcall(function()
-                        local button = LocalPlayer.PlayerGui:WaitForChild("Spectating", 5):WaitForChild("SpectateScreen", 5):WaitForChild("Content", 5):WaitForChild("ButtonOptions", 5):WaitForChild("ReturnLobby", 5)
+                        local button = LocalPlayer.PlayerGui:WaitForChild("Spectating"):WaitForChild("SpectateScreen"):WaitForChild("Content"):WaitForChild("ButtonOptions"):WaitForChild("ReturnLobby")
                         if button and button:IsA("GuiButton") and getconnections then
                             for _, connection in pairs(getconnections(button.MouseButton1Click)) do
                                 connection:Fire()
